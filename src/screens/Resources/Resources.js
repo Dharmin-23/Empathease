@@ -2,8 +2,27 @@ import React, { useEffect } from 'react';
 import { ImageBackground } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Button } from 'native-base';
+import YoutubePlayer from "react-native-youtube-iframe";
+import { View } from 'react-native';
+import { useState, useCallback, useRef } from 'react';
+
 
 const Resources = () => {
+
+  const [playing, setPlaying] = useState(false);
+
+  const onStateChange = useCallback((state) => {
+    if (state === "ended") {
+      setPlaying(false);
+      Alert.alert("video has finished playing!");
+    }
+  }, []);
+
+  const togglePlaying = useCallback(() => {
+    setPlaying((prev) => !prev);
+  }, []);
+
+
   // const navigation = useNavigation();
 
   // useEffect(() => {
@@ -15,13 +34,15 @@ const Resources = () => {
   // }, [navigation]);
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/background.png')}
-      style={{ flex: 1 }}
-    >
-      <Button>Helloe to Resources</Button>
-      {/* You can add any content you want to display on the Resources */}
-    </ImageBackground>
+    <View>
+    <YoutubePlayer
+      height={300}
+      play={playing}
+      videoId={"iee2TATGMyI"}
+      onChangeState={onStateChange}
+    />
+    <Button title={playing ? "pause" : "play"} onPress={togglePlaying} />
+  </View>
   );
 };
 

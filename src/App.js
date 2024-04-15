@@ -11,6 +11,7 @@ import Register from './screens/Register';
 // import Homepage from './screens/Homepage';
 import AnimTab from './bottomTab/AnimTab';
 // import UserProfile from './screens/UserProfile';
+import { ChatListScreen, ChatWindow } from './screens/chat';
 
 import Colors from './constants/Colors';
 
@@ -52,6 +53,8 @@ const RootStack = () => {
         <Stack.Screen name="Register" component={Register} />
         {/* <Stack.Screen name="Homepage" component={Homepage} /> */}
         <Stack.Screen name="AnimTab" component={AnimTab} />
+        <Stack.Screen name="ChatListScreen" component={ChatListScreen} />
+        <Stack.Screen name="ChatWindow" component={ChatWindow} />
         {/* <Stack.Screen name="UserProfile" component={UserProfile} /> */}
       </Stack.Navigator>
     );

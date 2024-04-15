@@ -1,17 +1,50 @@
-import { Center } from 'native-base';
 import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import Modal from 'react-native-modal';
+import { baseUrl } from '../../constants/Constants';
 
-const OtpVerification = ({ isVisible, onClose }) => {
-  const [otp, setOtp] = useState(['', '', '', '']);
-  const refs = [useRef(), useRef(), useRef(), useRef()];
+const OtpVerification = ({ isVisible, onClose, onSuccess, userEmail }) => {
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const refs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
 
   const handleVerify = () => {
-    // Implement your OTP verification logic here
-    console.log('Verifying OTP:', otp.join(''));
-    // Close the modal after verification
-    onClose();
+    const otpValue = otp.join('');
+    if (otpValue.length === 6) {  
+      // Send OTP verification request to backend
+      verifyOtp({ email: userEmail, otp: otpValue }) // Send the OTP as an object with 'otp' property
+        .then((response) => {
+          console.log(response);
+          if (response.title === "Success") {
+            onSuccess(); // Call the parent component function on success
+            onClose(); // Close the modal
+          } else {
+            alert('Invalid OTP. Please try again.'); // Notify user of invalid OTP
+          }
+        })
+        .catch((error) => {
+          console.error('Error verifying OTP:', error);
+          alert('An error occurred while verifying OTP. Please try again later.');
+        });
+    } else {
+      alert('Please enter a 6-digit OTP.');
+    }
+  };
+
+  const verifyOtp = async (otpData) => {
+    console.log(otpData);
+    try {
+      const response = await fetch(baseUrl + "/auth/verify", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(otpData), // Update to include email
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error verifying OTP:', error);
+      throw error;
+    }
   };
 
   const handleChange = (index, value) => {
@@ -19,7 +52,7 @@ const OtpVerification = ({ isVisible, onClose }) => {
       const newOtp = [...otp];
       newOtp[index] = value;
       setOtp(newOtp);
-      if (value.length === 1 && index < 3) {
+      if (value.length === 1 && index < 5) {
         refs[index + 1].current.focus();
       }
     }
@@ -27,9 +60,8 @@ const OtpVerification = ({ isVisible, onClose }) => {
 
   return (
     <Modal isVisible={isVisible} onBackdropPress={onClose}>
-      
       <View style={styles.container}>
-        <Text style={styles.title}>Enter 4-digit OTP</Text>
+        <Text style={styles.title}>Enter 6-digit OTP</Text>
         <Text style={styles.infoText}>An OTP has been sent to the registered email</Text>
         <View style={styles.inputContainer}>
           {otp.map((digit, index) => (

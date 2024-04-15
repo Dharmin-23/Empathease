@@ -1,24 +1,76 @@
 import React, { useState } from 'react';
-import { View, Text } from 'react-native';
-import { Center, Box, VStack, FormControl, Input, Button, HStack, Link, Image, Heading, Select } from 'native-base';
+import { Center, Box, VStack, FormControl, Input, Button, HStack, Link, Heading } from 'native-base';
+import axios from 'axios'; // Import Axios
 import { useNavigation } from '@react-navigation/native';
+import { baseUrl } from '../../constants/Constants';
+import OtpVerification from '../SignIn/OtpVerification';
 
 const Register = () => {
+  const [user, setUser] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+  });
+
+  var res = 1;
+
   const navigation = useNavigation();
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [otpVisible, setOtpVisible] = useState(false);
+  const [userEmail, setUserEmail] = useState(""); // State to store user email
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [age, setAge] = useState('');
-  const [gender, setGender] = useState('');
-  const [sexuality, setSexuality] = useState('');
+  function handleChange(name, value) {
+    setUser({
+      ...user,
+      [name]: value,
+    });
+  }
+  
+  async function handleSubmit() {
+    setFormSubmitted(true);
+  
+    const isFormValid = Object.values(user).every((value) => value !== "") || !formSubmitted;
+  
+    if (!isFormValid) {
+      alert("Error !!!. Please fill out all fields");
+    } else {
+      try {
+        res = await axios.post(baseUrl + "/auth/register", user);
+        console.log(res)
+        // setOtpVisible(true);
+    
 
-  const handleSubmit = () => {
-    // Handle form submission
-    console.log('Submitted:', { name, email, age, gender, sexuality });
-  };
+        // console.log(res);
+        // setUserEmail(user.email);
+
+        if (res.status === 200) {
+          // Registration successful, show success message or navigate to another screen
+          console.log("Registration successful!");
+          setUserEmail(user.email);
+          setOtpVisible(true); // Optionally show OTP verification modal
+        } else {
+          // Handle unexpected response status codes
+          console.error("Unexpected response status:", res.status);
+          alert("Error !!!. Registration failed. Please try again.");
+        }
+
+      } catch (error) {
+        console.log(res)
+        console.log(user);
+        console.error("Error in registration:", error);
+        alert("Error !!!. Registration failed. Please try again.");
+      }
+    }
+  }
 
   const handleSignIn = () => {
     // Navigate back to the sign-in page
+    navigation.navigate('SignIn');
+  };
+
+  const handleOtpVerificationSuccess = () => {
+    setOtpVisible(false);
     navigation.navigate('SignIn');
   };
 
@@ -31,53 +83,38 @@ const Register = () => {
 
         <VStack space={3} mt="5">
           <FormControl>
-            <FormControl.Label>Name</FormControl.Label>
-            <Input value={name} onChangeText={setName} />
+            <FormControl.Label>First Name</FormControl.Label>
+            <Input value={user.firstName} onChangeText={(value) => handleChange('firstName', value)} color="white"/>
+          </FormControl>
+          <FormControl>
+            <FormControl.Label>Last Name</FormControl.Label>
+            <Input value={user.lastName} onChangeText={(value) => handleChange('lastName', value)} color="white"/>
           </FormControl>
           <FormControl>
             <FormControl.Label>Email</FormControl.Label>
-            <Input value={email} onChangeText={setEmail} keyboardType="email-address" />
+            <Input value={user.email} onChangeText={(value) => handleChange('email', value)} keyboardType="email-address" color="white" />
           </FormControl>
           <FormControl>
-            <FormControl.Label>Age</FormControl.Label>
-            <Input value={age} onChangeText={setAge} keyboardType="numeric" />
-          </FormControl>
-          <FormControl>
-            <FormControl.Label>Gender</FormControl.Label>
-            <Select
-              selectedValue={gender}
-              minWidth={200}
-              onValueChange={(itemValue) => setGender(itemValue)}
-            >
-              <Select.Item label="Male" value="male" />
-              <Select.Item label="Female" value="female" />
-              <Select.Item label="Other" value="other" />
-            </Select>
-          </FormControl>
-          <FormControl>
-            <FormControl.Label>Sexuality</FormControl.Label>
-            <Select
-              selectedValue={sexuality}
-              minWidth={200}
-              onValueChange={(itemValue) => setSexuality(itemValue)}
-            >
-              <Select.Item label="Heterosexual" value="heterosexual" />
-              <Select.Item label="Homosexual" value="homosexual" />
-              <Select.Item label="Bisexual" value="bisexual" />
-              <Select.Item label="Other" value="other" />
-            </Select>
+            <FormControl.Label>Password</FormControl.Label>
+            <Input
+              value={user.password}
+              onChangeText={(value) => handleChange('password', value)}
+              secureTextEntry // This hides the input characters
+              color="white"
+            />
           </FormControl>
           <Button mt="2" colorScheme="indigo" onPress={handleSubmit}>
             Register
           </Button>
           <HStack mt="6" justifyContent="center">
-            
             <Link _text={{ color: "indigo.500", fontWeight: "medium", fontSize: "sm" }} onPress={handleSignIn}>
-            Already have an account? Sign In!
+              Already have an account? Sign In!
             </Link>
           </HStack>
         </VStack>
       </Box>
+
+      <OtpVerification isVisible={otpVisible} onClose={() => setOtpVisible(false)} userEmail={userEmail} onSuccess={handleOtpVerificationSuccess} />
     </Center>
   );
 };
