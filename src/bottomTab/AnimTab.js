@@ -1,5 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useContext } from 'react'
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, useColorScheme } from 'react-native'
 import Icon, { Icons } from '../components/Icons';
 import Colors from '../constants/Colors';
@@ -13,14 +13,21 @@ import Community from '../screens/Community';
 import Expert from '../screens/Expert';
 import Resources from '../screens/Resources';
 import UserProfile from '../screens/UserProfile';
+import ForumList from '../screens/Community/ForumList';
 import LinearGradient from 'react-native-linear-gradient';
 import { Avatar } from 'react-native-paper';
 import { IconButton, MD3Colors } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { UserType } from '../UserContext';
+import  jwt_decode  from 'jwt-decode';
+import axios from 'axios';
+import User from '../components/User';
+import { baseUrl } from '../constants/Constants';
 
 const TabArr = [
   { route: 'Homepage', label: 'Homepage', type: Icons.AntDesign, icon: 'home', component: Homepage },
   { route: 'Question', label: 'Questionare', type: Icons.AntDesign, icon: 'question', component: Question },
-  { route: 'Community', label: 'Community', type: Icons.AntDesign, icon: 'team', component: Community },
+  { route: 'Community', label: 'Community', type: Icons.AntDesign, icon: 'team', component: ForumList },
   { route: 'Expert', label: 'Expert', type: Icons.Entypo, icon: 'graduation-cap', component: Expert },
   { route: 'Resources', label: 'Resources', type: Icons.AntDesign, icon: 'videocamera', component: Resources },
 ];
@@ -87,13 +94,57 @@ const TabButton = (props) => {
 }
 
 const AnimTab = () => {
+  // console.log(UserType)
+  const { user, setUser } = useContext(UserType);
+  console.log(user)
+  
+  const [users, setUsers] = useState([]);
   const [showProfileModal, setShowProfileModal] = useState(false);
   //const { email } = route.params;
   const navigation = useNavigation();
 
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      console.log('Fetch Users')
+
+      // const token = await AsyncStorage.getItem("authToken");
+      // const [headerEncoded, payloadEncoded, signature] = token.split(".");
+      // const payload = JSON.parse(atob(payloadEncoded));
+
+      // console.log('!!!' + token);
+      
+      // const decodedToken = jwt_decode(token);
+      // console.log("%%%%%%%%%%%%%5")
+      // console.log(decodedToken)
+      // const userId = decodedToken.userId;
+      // console.log(userId)
+      // setUserId(userId);
+      
+      axios
+        .get(baseUrl + "/auth/")
+        .then((response) => {
+          // console.log(JSON.stringify(response,null, 2))
+          // console.log('@'+response.data.payload)
+          setUsers(response.data.payload);
+        })
+        .catch((error) => {
+          console.log("error retrieving users", error);
+        });
+    };
+
+    fetchUsers();
+  }, []);
+
+
   const handleChatIconPress = () => {
     navigation.navigate('ChatListScreen');
   };
+
+  const handleAllUsers = () => {
+    console.log(users)
+    navigation.navigate('AllUsersScreen', { users: users });
+  }
   
   return (
     
@@ -104,14 +155,35 @@ const AnimTab = () => {
       >
         <TouchableOpacity onPress={() => setShowProfileModal(true)} style={styles.profileContainer}>
           <Avatar.Image size={60} source={require('../assets/images/avatar.png')} />
-          <Text style={styles.username}>Username</Text>
+          <Text style={styles.username}>Your Profile</Text>
         </TouchableOpacity>
 
         <IconButton
           icon="chat"
-          iconColor={MD3Colors.error50}
-          size={20}
+          mode="contained-tonal"
+          iconColor={MD3Colors.primary50}
+          size={30}
           onPress={handleChatIconPress}
+          style={{marginRight: 20}}
+          
+        />
+
+        <IconButton
+          icon="account-group"
+          mode="contained"
+          iconColor="white"
+          size={30}
+          onPress={handleAllUsers}
+          style={{marginRight: 20}}
+          
+        />
+
+        <IconButton
+          icon="account-multiple-plus"
+          mode="contained"
+          iconColor={MD3Colors.primary50}
+          size={30}
+          onPress={() => navigation.navigate("FriendsScreen")}
         />
 
         

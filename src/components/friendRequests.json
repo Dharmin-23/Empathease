@@ -1,0 +1,18 @@
+[
+    {
+      "_id": "1",
+      "name": "John Doe",
+      "image": "https://gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50.jpg"
+    },
+    {
+      "_id": "2",
+      "name": "Jane Smith",
+      "image": "https://ui-avatars.com/api/?name=Jane+Smith"
+    },
+    {
+      "_id": "3",
+      "name": "Alice Johnson",
+      "image": "https://ui-avatars.com/api/?name=Alice+Johnson"
+    }
+  ]
+  

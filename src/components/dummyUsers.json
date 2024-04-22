@@ -1,0 +1,20 @@
+[
+    {
+      "id": "1",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "image": "https://randomuser.me/api/portraits/men/1.jpg"
+    },
+    {
+      "id": "2",
+      "name": "Jane Doe",
+      "email": "jane@example.com",
+      "image": "https://randomuser.me/api/portraits/women/2.jpg"
+    },
+    {
+        "id": "2",
+        "name": "Jannen Doe",
+        "email": "jannen@example.com",
+        "image": "https://randomuser.me/api/portraits/women/3.jpg"
+    }
+  ]

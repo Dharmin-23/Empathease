@@ -1,4 +1,5 @@
 import React from 'react';
+import { useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Center, Box, VStack, FormControl, Heading, Input, Button, HStack, Link, Image } from 'native-base';
 import { useNavigation } from '@react-navigation/native';
@@ -6,11 +7,31 @@ import { useState } from 'react';
 import OtpVerification from './OtpVerification';
 import axios from 'axios';
 import { baseUrl } from '../../constants/Constants';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ScrollView } from 'react-native-gesture-handler';
+
 
 
 const SignIn = () => {
   var res = 1;
   const navigation = useNavigation();
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+
+        if (token) {
+          navigation.navigate("AnimTab");
+        } else {
+          // token not found , show the login screen itself
+        }
+      } catch (error) {
+        console.log("error", error);
+      }
+    };
+
+    checkLoginStatus();
+  }, []);
   const [isOtpVisible, setIsOtpVisible] = useState(false);
 
   const [user, setUser] = useState({
@@ -27,18 +48,28 @@ const SignIn = () => {
 
   const handleSignIn = async () => {
     console.log(user)
-    navigation.navigate('AnimTab');
-    // try {
-    //   res = await axios.post(baseUrl + "/auth/login", user);
+    
 
-    //   console.log(res);
-    //   if (res.status === 200) {
-    //     navigation.navigate('AnimTab');
-    //     setIsOtpVisible(true); // Show OTP verification modal
-    //   }
-    // } catch (error) {
-    //   setErrorMessage('Invalid email or password. Please try again.'); // Set error message
-    // }
+    
+    try {
+      res = await axios.post(baseUrl + "/auth/login", user);
+
+      
+      if (res.status === 200) {
+        console.log("login nresponse"+res.data)
+        const token = res.data.payload.token;
+        const username = res.data.payload.username;
+        console.log("Inside Signin "+ res.data.payload )
+      
+        
+        AsyncStorage.setItem("username", username)
+        AsyncStorage.setItem("authToken", token);
+        navigation.navigate('AnimTab');
+        setIsOtpVisible(true); // Show OTP verification modal
+      }
+    } catch (error) {
+      setErrorMessage('Invalid email or password. Please try again.'); // Set error message
+    }
   };
 
   // Function to navigate to the registration screen
@@ -53,11 +84,13 @@ const SignIn = () => {
   };
 
   return (
+    <ScrollView>
     <Center w="100%">
       <Box safeArea p="2" py="0" w="80%" maxW="290">
         <Image
           source={require('../../assets/images/bottomart.png')}
           style={{ width: '100%', resizeMode: 'contain' }}
+          alt='Bottom bc'
         />
         <Heading size="lg" fontWeight="600" color="coolGray.800" _dark={{ color: "warmGray.50" }}>
           Welcome
@@ -108,6 +141,7 @@ const SignIn = () => {
         />
       </View>
     </Center>
+    </ScrollView>
   );
 };
 

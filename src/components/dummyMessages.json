@@ -1,0 +1,38 @@
+[
+    {
+      "id": "1",
+      "senderId": "1",
+      "recipientId": "2",
+      "message": "Hello, how are you?",
+      "timeStamp": "2024-04-10T10:30:00"
+    },
+    {
+      "id": "2",
+      "senderId": "2",
+      "recipientId": "1",
+      "message": "Hi! I'm good, thanks. How about you?",
+      "timeStamp": "2024-04-10T10:35:00"
+    },
+    {
+      "id": "3",
+      "senderId": "1",
+      "recipientId": "2",
+      "message": "I'm doing well too. What have you been up to lately?",
+      "timeStamp": "2024-04-10T10:40:00"
+    },
+    {
+      "id": "4",
+      "senderId": "2",
+      "recipientId": "1",
+      "message": "Just working on some projects. How about you?",
+      "timeStamp": "2024-04-10T10:45:00"
+    },
+    {
+      "id": "5",
+      "senderId": "1",
+      "recipientId": "2",
+      "message": "Same here. We should catch up sometime!",
+      "timeStamp": "2024-04-10T10:50:00"
+    }
+  ]
+  

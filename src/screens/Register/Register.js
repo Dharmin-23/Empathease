@@ -11,6 +11,7 @@ const Register = () => {
     lastName: "",
     email: "",
     password: "",
+    username: "",
   });
 
   var res = 1;
@@ -93,6 +94,10 @@ const Register = () => {
           <FormControl>
             <FormControl.Label>Email</FormControl.Label>
             <Input value={user.email} onChangeText={(value) => handleChange('email', value)} keyboardType="email-address" color="white" />
+          </FormControl>
+          <FormControl>
+            <FormControl.Label>Username</FormControl.Label>
+            <Input value={user.username} onChangeText={(value) => handleChange('username', value)} color="white"/>
           </FormControl>
           <FormControl>
             <FormControl.Label>Password</FormControl.Label>

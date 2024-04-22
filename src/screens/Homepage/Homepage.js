@@ -19,21 +19,7 @@ const Homepage = () => {
       source={require('../../assets/images/background.png')}
       style={{ flex: 1 }}
     >
-      {/* Custom header with LinearGradient */}
-      {/* <LinearGradient
-        colors={['rgba(0,0,0,0.9)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0)']}
-        style={styles.header}
-      >
-        <TouchableOpacity onPress={() => setShowProfileModal(true)} style={styles.profileContainer}>
-          <Avatar.Image size={60} source={require('../../assets/images/avatar.png')} />
-          <Text style={styles.username}>Username</Text>
-        </TouchableOpacity>
-      </LinearGradient>
-
-      <UserProfile 
-        isVisible={showProfileModal} 
-        onClose={() => setShowProfileModal(false)} 
-      /> */}
+     
 
       <View style={styles.quoteContainer}>
         <Text style={styles.quote}>"Believe you can and you're halfway there."</Text>

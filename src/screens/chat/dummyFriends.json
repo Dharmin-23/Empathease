@@ -1,0 +1,21 @@
+[
+    {
+      "_id": "1",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "image": "https://example.com/images/john.jpg"
+    },
+    {
+      "_id": "2",
+      "name": "Jane Smith",
+      "email": "jane@example.com",
+      "image": "https://example.com/images/jane.jpg"
+    },
+    {
+      "_id": "3",
+      "name": "Alice Johnson",
+      "email": "alice@example.com",
+      "image": "https://example.com/images/alice.jpg"
+    }
+  ]
+  

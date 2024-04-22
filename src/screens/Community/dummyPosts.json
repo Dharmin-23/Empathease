@@ -1,7 +1,9 @@
 [
     {
       "id": 1,
+      "originalposter": "John Smith",
       "title": "First post",
+      "category" : "self help",
       "content": "This is the content of the first post.",
       "images": [],
       "videos": [],
@@ -13,6 +15,8 @@
     {
       "id": 2,
       "title": "Second post",
+      "originalposter": "Jane Smith",
+      "category" : "Today I learnt",
       "content": "This is the content of the second post.",
       "images": [],
       "videos": [],

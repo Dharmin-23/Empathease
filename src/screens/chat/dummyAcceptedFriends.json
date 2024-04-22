@@ -1,0 +1,18 @@
+[
+    {
+      "_id": "1",
+      "name": "John Doe",
+      "image": "https://example.com/john-doe.jpg"
+    },
+    {
+      "_id": "2",
+      "name": "Jane Smith",
+      "image": "https://example.com/jane-smith.jpg"
+    },
+    {
+      "_id": "3",
+      "name": "Alice Johnson",
+      "image": "https://example.com/alice-johnson.jpg"
+    }
+  ]
+  
