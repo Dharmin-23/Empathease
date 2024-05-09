@@ -9,25 +9,25 @@ import { useNavigation } from '@react-navigation/native';
 
 const Question = ({route}) => {
   const [selectedOptions, setSelectedOptions] = useState({});
-  const {bankId} = route.params;
-  const [questions, setQuestions] = useState([]);
+  const {bankId, questions} = route.params;
+  
   const navigation = useNavigation();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = await AsyncStorage.getItem("authToken");
-        const response = await axios.get(baseUrl + "/api/question?bankId="+bankId , {
-          headers: { Authorization: "Bearer " + token }
-        });
-        setQuestions(response.data.payload);
-      } catch (error) {
-        console.error('Error fetching questions:', error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const token = await AsyncStorage.getItem("authToken");
+  //       const response = await axios.get(baseUrl + "/api/question?bankId="+bankId , {
+  //         headers: { Authorization: "Bearer " + token }
+  //       });
+  //       setQuestions(response.data.payload);
+  //     } catch (error) {
+  //       console.error('Error fetching questions:', error);
+  //     }
+  //   };
     
-    fetchData();
-  }, [bankId]); // Add bankId to dependency array
+  //   fetchData();
+  // }, [bankId]); // Add bankId to dependency array
 
   // Function to handle option selection
   const handleOptionSelect = (questionId, optionId) => {

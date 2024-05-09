@@ -5,29 +5,12 @@ import { baseUrl } from '../../constants/Constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-const categories = [
-  { id: 1, name: 'Depression' },
-  { id: 2, name: 'Anxiety' },
-  { id: 3, name: 'Stress' },
-  { id: 4, name: 'PTSD' },
-  { id: 5, name: 'Bipolar Disorder' },
-  // Add more categories as needed
-];
-
-
-
-
-
-
-
 const Bank = ({ navigation }) => {
-  const navigateToCategory = (bankId) => {
-    // console.log("Passing bank Id: " +bankId)
-    // Navigate to the category page passing the category ID as a parameter
-    navigation.navigate('Question', { bankId });
-  };
 
-  const [Banks, setBanks] = useState([]);
+  const[Banks, setBanks] = useState([]);
+  const[bankID, setBankId] = useState(0);
+
+  const [questions, setQuestions] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,7 +35,31 @@ const Bank = ({ navigation }) => {
     };
     
     fetchData();
+    
   }, []);
+
+  const fetchQuestions = async () => {
+    try {
+      console.log("Going to fetch questions of Id: ", bankID)
+      const token = await AsyncStorage.getItem("authToken");
+      const response = await axios.get(baseUrl + "/api/question?bankId="+bankID , {
+        headers: { Authorization: "Bearer " + token }
+      });
+      setQuestions(response.data.payload);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    }
+  };
+
+  const navigateToCategory = (bankId) => {
+    setBankId(bankId);
+    fetchQuestions();
+    // console.log(questions)
+    // Set a timeout before navigating to the Question screen
+    setTimeout(() => {
+      navigation.navigate('Question', { bankID, questions });
+    }, 500); // Adjust the timeout duration as needed
+  };
 
 
 
