@@ -24,14 +24,27 @@ const ChatMessagesScreen = ({route}) => {
   const [messages, setMessages] = useState([]);
   const [refreshing, setRefreshing] = useState(false); // State to track refresh action
   const navigation = useNavigation();
+  const [myId, setMyId] = useState([]);
   const { recepientId, recepientName} = route.params;
   const hardcodedProfilePic = require("../../assets/images/avatar.png");
+  
+  
 
   const [message, setMessage] = useState("");
   const scrollViewRef = useRef(null);
+  const fetchUserId = async () => {
+    try {
+      const userId = await AsyncStorage.getItem("userId");
+      
+      setMyId(userId)// Update the state with the fetched username
+    } catch (error) {
+      console.error('Error fetching username:', error);
+    }
+  }
   const fetchMessages = async () => {
     try {
       const token = await AsyncStorage.getItem("authToken");
+      
       const response = await axios.post(
         baseUrl + "/api/chat",
         { id2: recepientId[0] },
@@ -42,6 +55,8 @@ const ChatMessagesScreen = ({route}) => {
           },
         }
       );
+      // console.log(" RecipientID: "+ recepientId+ "My Id: "+ myId)
+      // console.log("meesaseges list: ", response.data.payload)
       setMessages(response.data.payload.reverse());
     } catch (error) {
       console.error('Error fetching chats:', error);
@@ -50,9 +65,10 @@ const ChatMessagesScreen = ({route}) => {
 
 
   useEffect(() => {
+    fetchUserId();
     
     fetchMessages();
-  }, []);
+  }, [myId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -137,17 +153,17 @@ const ChatMessagesScreen = ({route}) => {
             style={[
               styles.messageContainer,
               {
-                alignSelf: item.receiverId === 1 ? "flex-end" : "flex-start",
-                backgroundColor: item.senderId === 1 ? "#0532ab" : "#fff",
-                marginLeft: item.senderId !== 1 ? 15 : 0,
-                marginRight: item.senderId === 1 ? 15 : 0,
+                alignSelf: String(item.receiverId) === String(myId) ? "flex-start" : "flex-end",
+                backgroundColor: String(item.receiverId) === String(myId) ? "#c1cff5" : "#19056e",
+                marginLeft: String(item.receiverId) === String(myId) ? 20 : 0,
+                marginRight: String(item.receiverId) !== String(myId) ? 20 : 0,
               },
             ]}
           >
-            <Text style={[styles.messageText, { color: item.senderId === 1 ? "#fff" : "#000" }]}>
+            <Text style={[styles.messageText, { color: String(item.receiverId) === String(myId) ? "#000" : "#fff" }]}>
               {item.content}
             </Text>
-            <Text style={styles.timeText}>{formatDate(item.timestamp)}</Text>
+            <Text style={[styles.timeText, { color: String(item.receiverId) === String(myId) ? "#555557" : "#757575" }]}>{formatDate(item.timestamp)}</Text>
           </View>
         ))}
       </ScrollView>
@@ -225,7 +241,8 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   messageContainer: {
-    padding: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
     marginVertical: 10,
     borderRadius: 7,
     maxWidth: "60%",
@@ -236,17 +253,16 @@ const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: 10,
-    color: "#757575",
     position: 'absolute',
     bottom: 0,
     right: 0,
-    marginTop: 5,
+    marginBottom: 0, // Add margin bottom for space
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderTopWidth: 1,
     borderTopColor: "#dddddd",
     backgroundColor: "#000",
@@ -267,3 +283,4 @@ const styles = StyleSheet.create({
     height: 250,
   },
 });
+

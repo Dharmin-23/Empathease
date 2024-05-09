@@ -68,7 +68,8 @@ const SignIn = () => {
         
         AsyncStorage.setItem("username", username)
         AsyncStorage.setItem("authToken", token);
-        // AsyncStorage.setItem("userId", userId)
+        AsyncStorage.setItem("userId", String(userId))
+        console.log("Useername at time of login: "+username+"UsewrId: "+userId)
         navigation.navigate('AnimTab');
         setIsOtpVisible(true); // Show OTP verification modal
       }
