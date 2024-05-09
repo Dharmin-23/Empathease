@@ -85,17 +85,20 @@ const Question = ({route}) => {
         <View key={question.first.id} style={{ backgroundColor: 'white', padding: 10, marginVertical: 10, borderRadius: 8 }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>{question.first.content}</Text>
           <View style={{ borderBottomWidth: 1, borderColor: 'rgba(0, 0, 0, 0.1)', marginHorizontal: -10, marginBottom: 10 }} />
+          
           <Radio.Group
-            name={`question-${question.first.id}`}
-            value={selectedOptions[question.first.id]}
-            onChange={(value) => handleOptionSelect(question.first.id, value)}
-          >
-            {question.second.map((option) => (
-              <Radio key={option.id} value={option.id} my={1}>
-                <Text>{option.content}</Text>
-              </Radio>
-            ))}
-          </Radio.Group>
+          name={`question-${question.first.id}`}
+          value={selectedOptions[question.first.id] || null} // Add a default value of null
+          onChange={(value) => handleOptionSelect(question.first.id, value)}
+        >
+          {question.second.map((option) => (
+            <Radio key={option.id} value={option.id} my={1}>
+              <Text>{option.content}</Text>
+            </Radio>
+          ))}
+        </Radio.Group>
+
+
         </View>
       ))}
       <Pressable
