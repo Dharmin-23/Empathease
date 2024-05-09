@@ -2,18 +2,19 @@ import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import Modal from 'react-native-modal';
 import { baseUrl } from '../../constants/Constants';
-
+import { TouchableOpacity } from 'react-native';
 const OtpVerification = ({ isVisible, onClose, onSuccess, userEmail }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const refs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
 
   const handleVerify = () => {
     const otpValue = otp.join('');
+    console.log("Otp value to be verified" + otpValue)
     if (otpValue.length === 6) {  
       // Send OTP verification request to backend
       verifyOtp({ email: userEmail, otp: otpValue }) // Send the OTP as an object with 'otp' property
         .then((response) => {
-          console.log(response);
+          // console.log('After verifyotp is called'+response);
           if (response.title === "Success") {
             onSuccess(); // Call the parent component function on success
             onClose(); // Close the modal
@@ -30,15 +31,16 @@ const OtpVerification = ({ isVisible, onClose, onSuccess, userEmail }) => {
     }
   };
 
-  const verifyOtp = async (otpData) => {
-    console.log(otpData);
+  const verifyOtp = async (data) => {
+    // const data = {email: userEmail, otp:}
+    // console.log("Inside verifyOtp"+data)
     try {
       const response = await fetch(baseUrl + "/auth/verify", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(otpData), // Update to include email
+        body: JSON.stringify(data), // Update to include email
       });
       return await response.json();
     } catch (error) {
@@ -58,6 +60,21 @@ const OtpVerification = ({ isVisible, onClose, onSuccess, userEmail }) => {
     }
   };
 
+  const handleResend = async (otpData) => {
+    try {
+      const otpData = { email: userEmail };
+      const res = await fetch(baseUrl + "/auth/resend-otp", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(otpData),
+      });
+    } catch (error) {
+      console.error('Error resending OTP:', error);
+      throw error;
+    }
+  }
   return (
     <Modal isVisible={isVisible} onBackdropPress={onClose}>
       <View style={styles.container}>
@@ -77,6 +94,9 @@ const OtpVerification = ({ isVisible, onClose, onSuccess, userEmail }) => {
           ))}
         </View>
         <Button title="Verify" onPress={handleVerify} />
+        <TouchableOpacity onPress={handleResend} style={styles.resendButton}>
+              <Text style={{ color: "indigo" }}>Resend OTP</Text>
+        </TouchableOpacity>
       </View>
     </Modal>
   );
@@ -114,6 +134,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     backgroundColor: 'transparent', // Transparent background
     color: 'black', // Text color
+  },
+  resendButton: {
+    alignItems:'flex-end',
+    marginTop: 10,
+    backgroundColor: 'transparent',
+  },
+  resendText: {
+    color: 'indigo',
   },
 });
 

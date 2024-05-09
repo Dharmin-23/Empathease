@@ -4,9 +4,12 @@ import dummyPosts from './dummyPosts.json'
 import { useEffect, useCallback, useState } from 'react';
 import { TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import CommentItem from '../../components/CommunityPost/CommentItem';
+import { baseUrl } from '../../constants/Constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 import { Button } from 'react-native-paper';
+import CommentSection from './CommentSection';
 
 const PostDetail = ({ route }) => {
   const {postId } = route.params;
@@ -17,54 +20,38 @@ const PostDetail = ({ route }) => {
   const [post, setPost] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [comment, setComment] = useState('');
+  const [commentDTOList, setCommentDTOList] = useState([]);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    // console.log("useEffect triggered");
-    // console.log('Recievd post Id fgg:' + postId)
 
-    getPostData()
-  }, [postId])
+
+  useEffect(() => {
+    // console.log("Inside post Detail with post Id "+postId)
+    const fetchData = async () => {
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+        const response = await axios.get(baseUrl + "/forum/post/fetch/" + postId, {
+          headers: { Authorization: "Bearer " + token }
+        });
+        // console.log("Getting post deets"+response.data.payload)
+        // console.log(response.data.payload.commentDTOList)
+        setPost(response.data.payload);
+        setCommentDTOList(response.data.payload.commentDTOList);
+        console.log(commentDTOList)
+
+        // console.log("Post details: "+post)
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
 
   const handleAddComment = () => {
-    navigation.navigate('CreateComment')
+    navigation.navigate('CreateComment', {postId, parentId: null})
   }
-  const getPostData = useCallback(async () => {
-
-
-    try {
-        setIsLoading(true);
-        // Find the post with the matching postId
-        const postData = dummyPosts.find(item => item.id === postId);
-        if (postData) {
-          // If the post is found, set it in the state
-        //   console.log(postData);
-          setPost(postData);
-        } else {
-          // Handle case when post is not found
-          console.log(`Post with postId ${postId} not found`);
-        }
-      } catch (error) {
-        // Handle any errors that occur during the retrieval
-        console.error('Error retrieving post data:', error);
-      } finally {
-        // Ensure loading state is set to false regardless of success or failure
-        setIsLoading(false);
-      }
-    // const { data } = await axios.get(`post/${postId}`)
-    // setIsLoaading(true)
-    // console.log('Inside getPOstData!! with postID'+postId)
-    
-    
-    // console.log("!!!"+dummyPosts)
-    // setPost(postData)
-    // setIsLoaading(false)
-  }, [postId])
-  
-//   useEffect(() => {
-//     console.log("Inside useEffect postId:", postID);
-//   }, [postID]);
 
 
 
@@ -72,8 +59,8 @@ const PostDetail = ({ route }) => {
     <ScrollView>
       {post ? <View style={styles.container}>
         <Text style={styles.title}>{post.title}</Text>
-        <Text style={styles.category}>Posted in <Text style={styles.highlightedCategory}>{post.category}</Text></Text>
-        <Text style={styles.poster}>by {post.originalposter}</Text>
+        <Text style={styles.category}>Posted in <Text style={styles.highlightedCategory}>{post.forumName}</Text></Text>
+        <Text style={styles.poster}>by {post.userName}</Text>
         <View style={styles.separator}></View>
         <Text style={styles.content}>{post.content}</Text>
         {post.images && post.images.map(image => (
@@ -88,11 +75,13 @@ const PostDetail = ({ route }) => {
 
       <View style={styles.commentSection}>
         <View style={styles.commentInputContainer}>
-        <Button icon="plus" mode="contained" buttonColor='#483d8b' onPress={handleAddComment}>
+        <Button icon="plus" mode="contained" buttonColor='#978aff' onPress={handleAddComment}>
             Add a comment
         </Button>
         </View>
         {/* CommentItem/> */}
+        {commentDTOList? <CommentSection commetDTOlist={commentDTOList}/>: undefined}
+        
         {/* <CommentList postId={postId} /> */}
       </View>
       
@@ -115,7 +104,7 @@ const styles = StyleSheet.create({
   },
   highlightedCategory: {
     fontWeight: 'bold',
-    color: 'red', // Change color to your preferred highlight color
+    color: '#b0d4f5', // Change color to your preferred highlight color
   },
   poster: {
     marginBottom: 5,
@@ -127,7 +116,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   content: {
-    color: 'gray',
+    color: 'white',
     marginBottom: 10,
   },
   image: {

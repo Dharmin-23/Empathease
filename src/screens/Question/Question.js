@@ -1,89 +1,119 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect} from 'react';
 import { View, Text, Pressable } from 'native-base';
+import { baseUrl } from '../../constants/Constants';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ScrollView } from 'react-native-gesture-handler';
+import { Radio } from 'native-base';
+import { useNavigation } from '@react-navigation/native';
 
-const Question = () => {
+const Question = ({route}) => {
   const [selectedOptions, setSelectedOptions] = useState({});
+  const {bankId} = route.params;
+  const [questions, setQuestions] = useState([]);
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+        const response = await axios.get(baseUrl + "/api/question?bankId="+bankId , {
+          headers: { Authorization: "Bearer " + token }
+        });
+        setQuestions(response.data.payload);
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+      }
+    };
+    
+    fetchData();
+  }, [bankId]); // Add bankId to dependency array
 
   // Function to handle option selection
-  const handleOptionSelect = (questionId, optionValue) => {
+  const handleOptionSelect = (questionId, optionId) => {
     setSelectedOptions(prevOptions => ({
       ...prevOptions,
-      [questionId]: optionValue,
+      [questionId]: optionId,
     }));
   };
 
   // Function to submit answers to backend
-  const handleSubmit = () => {
-    if (Object.values(selectedOptions).some(option => option === undefined)) {
-      // If any option is not selected, return without submitting
-      return;
+  const handleSubmit = async () => {
+
+    try {
+      // Your form submission logic here
+      const answers = Object.entries(selectedOptions).map(([questionId, optionId]) => ({
+        questionId: parseInt(questionId),
+        optionId: parseInt(optionId),
+      }));
+  
+      const response = {
+        bankId: bankId,
+        answers: answers,
+      };
+      
+      const token = await AsyncStorage.getItem("authToken");
+      
+      
+      // Example axios post request:
+      await axios.post(baseUrl+'/api/bank/submit', response, {
+        headers: { Authorization: "Bearer " + token }
+      });
+
+      navigation.navigate('AnimTab');
+      // setMessage('Successfully Created!');
+      // fadeIn();
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setMessage('Failed to create post');
     }
 
-    // Calculate the sum of selected options
-    const sum = Object.values(selectedOptions).reduce((acc, curr) => acc + parseInt(curr), 0);
-    console.log('Sum of selected options:', sum);
+    // console.log("Here are selected options:", selectedOptions);
+    // console.log(JSON.stringify(response))
 
-    // You can send the sum to the backend using an API call here
 
-    // Reset selectedOptions
-    setSelectedOptions({});
   };
-
-  // Dummy questionnaire data
-  const questionnaireData = [
-    { id: 1, question: 'How often have you been bothered by feeling nervous, anxious, or on edge?', options: ['Not at all', 'Several days', 'More than half the days', 'Nearly every day'] },
-    // Add more questions as needed
-  ];
 
   // Function to check if all questions are answered
   const areAllQuestionsAnswered = () => {
-    return Object.values(selectedOptions).every(option => option !== undefined);
+    return Object.keys(selectedOptions).length === questions.length;
   };
 
   return (
-    <View style={{ marginHorizontal: 10 }}>
-      {questionnaireData.map(question => (
-        <View key={question.id} style={{ backgroundColor: 'white', padding: 10, marginVertical: 10, borderRadius: 8 }}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>{question.question}</Text>
+    <ScrollView style={{ marginHorizontal: 10 }}>
+      {questions.map(question => (
+        <View key={question.first.id} style={{ backgroundColor: 'white', padding: 10, marginVertical: 10, borderRadius: 8 }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>{question.first.content}</Text>
           <View style={{ borderBottomWidth: 1, borderColor: 'rgba(0, 0, 0, 0.1)', marginHorizontal: -10, marginBottom: 10 }} />
-          {question.options.map((option, index) => (
-            <Pressable
-              key={index}
-              onPress={() => handleOptionSelect(question.id, index)}
-              style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 5 }}
-            >
-              <View
-                style={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: 10,
-                  borderWidth: 1,
-                  borderColor: selectedOptions[question.id] === index ? 'blue' : 'gray',
-                  backgroundColor: selectedOptions[question.id] === index ? 'blue' : 'white',
-                  marginRight: 10,
-                }}
-              />
-              <Text>{option}</Text>
-            </Pressable>
-          ))}
+          <Radio.Group
+            name={`question-${question.first.id}`}
+            value={selectedOptions[question.first.id]}
+            onChange={(value) => handleOptionSelect(question.first.id, value)}
+          >
+            {question.second.map((option) => (
+              <Radio key={option.id} value={option.id} my={1}>
+                <Text>{option.content}</Text>
+              </Radio>
+            ))}
+          </Radio.Group>
         </View>
       ))}
       <Pressable
         onPress={handleSubmit}
         disabled={!areAllQuestionsAnswered()}
         style={{
-          backgroundColor: areAllQuestionsAnswered() ? 'blue' : 'gray',
+          backgroundColor: areAllQuestionsAnswered() ? 'lightcyan' : 'gray',
           padding: 10,
           borderRadius: 8,
           alignItems: 'center',
           marginTop: 10,
         }}
       >
-        <Text style={{ color: 'white', fontWeight: 'bold' }}>
+        <Text style={{ color: 'black', fontWeight: 'bold' }}>
           {areAllQuestionsAnswered() ? 'Submit Answers' : 'Answer All Questions'}
         </Text>
       </Pressable>
-    </View>
+    </ScrollView> 
   );
 };
 

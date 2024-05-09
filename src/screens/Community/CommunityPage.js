@@ -1,173 +1,247 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
-
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { Center, Box, HStack, Menu, Divider, MenuItem, Heading, Button, Icon } from 'native-base';
-import { IconButton} from 'react-native-paper';
-import { HamburgerIcon} from 'native-base';
+import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { Center, Box, HStack, Divider, Heading, Button, Icon, Pressable } from 'native-base';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { baseUrl } from '../../constants/Constants';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Modal from 'react-native-modal';
+import { VStack } from 'native-base';
 
-// Importing dummy data from a JSON file
-import dummyPosts from './dummyPosts.json';
-
-const CommunityPage = ({route}) => {
+const CommunityPage = ({ route }) => {
   const [posts, setPosts] = useState([]);
-  const {forumName} = route.params; 
-  console.log("Fname:"+forumName) 
-  
+  const { forumName } = route.params; 
   const navigation = useNavigation();
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [filterType, setFilterType] = useState('recency');
-  const [visible, setVisible] = React.useState(false);
+  const [showErrorModalLike, setShowErrorModalLike] = useState(false);
+  const [showErrorModalFlag, setShowErrorModalFlag] = useState(false);
+  const [showFlagReasonModal, setShowFlagReasonModal] = useState(false);
+  const [flaggedPosts, setFlaggedPosts] = useState([]);
+  const [postIdToFlag, setPostIdToFlag] = useState(null);
+  const [flagReason, setFlagReason] = useState("");
 
   useEffect(() => {
-
     const fetchData = async () => {
       try {
-        
         const token = await AsyncStorage.getItem("authToken");
         const response = await axios.get(baseUrl + "/forum/" + forumName, {
           headers: { Authorization: "Bearer " + token }
         });
-        // console.log(response.data.payload)
-        const posts = response.data.payload;
-        // setCategories(response.data.payload);
+        setPosts(response.data.payload);
+        setFilteredPosts(response.data.payload);
       } catch (error) {
-        console.error('Error fetching categories:', error);
-        // Handle error if needed
+        console.error('Error fetching posts:', error);
       }
     };
-
     
-    // Initialize posts with dummy data when component mounts
     fetchData();
-    setPosts(dummyPosts);
-    setFilteredPosts(dummyPosts);
   }, []);
-
-  
-
-  
 
   const handleFilter = (type) => {
     setFilterType(type);
+    const sortedPosts = [...posts];
     if (type === 'recency') {
-      setFilteredPosts([...posts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      sortedPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } else if (type === 'likes') {
-      setFilteredPosts([...posts].sort((a, b) => b.likes - a.likes));
+      sortedPosts.sort((a, b) => b.likes - a.likes);
     }
+    setFilteredPosts(sortedPosts);
   };
 
   const handlePostDetail = (postId) => {
-    // console.log(postId + "ka data retereive")
-    navigation.navigate('PostDetail', {postId});
+    setTimeout(() => {
+      navigation.navigate('PostDetail', { postId });
+    }, 500);
   };
 
   const handleCreatePost = () => {
-    console.log("Create post clikced")
     navigation.navigate('CreatePost');
-  }
-
-  const handleLike = (postId) => {
-    // Update like count for the post in state
-    const updatedPosts = posts.map(post => {
-      if (post.id === postId) {
-        return { ...post, likes: post.likes + 1 };
-      }
-      return post;
-    });
-    setPosts(updatedPosts);
-    setFilteredPosts(updatedPosts);
   };
 
-  const handleFlag = (postId) => {
-    // Flag the post in state
-    const updatedPosts = posts.map(post => {
-      if (post.id === postId) {
-        return { ...post, flagged: true };
-      }
-      return post;
-    });
-    setPosts(updatedPosts);
-    setFilteredPosts(updatedPosts);
+  const handleLike = async (postId) => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      const response = await axios.get(baseUrl + "/forum/like/" + postId, {
+        headers: { Authorization: "Bearer " + token }
+      });
+      console.log("Post liked");
+      
+      const updatedPosts = posts.map(post => post.id === postId ? { ...post, liked: true } : post);
+      setPosts(updatedPosts);
+      setFilteredPosts(updatedPosts);
+    } catch (error) {
+      setShowErrorModalLike(true);
+    }
+  };
+
+  const handleFlag = async (postId) => {
+    const alreadyFlagged = flaggedPosts.includes(postId);
+    if (alreadyFlagged) {
+      setShowErrorModalFlag(true);
+    } else {
+      setShowFlagReasonModal(true);
+      setPostIdToFlag(postId);
+    }
+  };
+
+  const checkFlaggedPost = async (postId) => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      const response = await axios.get(baseUrl + "/forum/flagged/" + postId, {
+        headers: { Authorization: "Bearer " + token }
+      });
+      return response.data.payload.flagged;
+    } catch (error) {
+      console.error('Error checking flagged post:', error);
+      return false;
+    }
+  };
+
+  const submitFlag = async () => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      const response = await axios.post(baseUrl + "/forum/flag/"+postIdToFlag, {
+        reason: flagReason
+      }, {
+        headers: { Authorization: "Bearer " + token }
+      });
+      console.log("Post flagged");
+      
+      const updatedFlaggedPosts = [...flaggedPosts, postIdToFlag];
+      setFlaggedPosts(updatedFlaggedPosts);
+      setShowFlagReasonModal(false);
+      
+      const updatedPosts = posts.map(post => post.id === postIdToFlag ? { ...post, flagged: true } : post);
+      setPosts(updatedPosts);
+      setFilteredPosts(updatedPosts);
+    } catch (error) {
+      // console.error('Error flagging post', error);
+      setShowErrorModalFlag(true);
+
+    }
+  };
+
+  const handleRemoveFlag = async () => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      console.log("Reomving flag of", postIdToFlag)
+      const response = await axios.get(baseUrl + "/forum/flag-remove/"+postIdToFlag, {
+        headers: { Authorization: "Bearer " + token }
+      });
+      console.log("Flag removed");
+      
+      const updatedFlaggedPosts = flaggedPosts.filter(id => id !== postIdToFlag);
+      setFlaggedPosts(updatedFlaggedPosts);
+      setShowErrorModalFlag(false);
+      setShowFlagReasonModal
+      
+      const updatedPosts = posts.map(post => post.id === postIdToFlag ? { ...post, flagged: false } : post);
+      setPosts(updatedPosts);
+      setFilteredPosts(updatedPosts);
+    } catch (error) {
+      console.error('Error removing flag from post', error);
+    }
   };
 
   const renderPosts = () => {
-    return filteredPosts.map((post, index) => (
-     
-        <Box bg="white" p="4" mb={index === 0 ? "8" : "4"} borderRadius="md" shadow={1} marginLeft={2} marginRight={2}>
-        <TouchableOpacity key={post.id} onPress={() => handlePostDetail(post.id)}>
-        <HStack justifyContent="space-between" alignItems="center">
-          <Heading size="md" mb="2">{post.title}</Heading>
-          <Text style={styles.category}>Posted in <Text style={styles.highlightedCategory}>{post.category}</Text></Text>
-        </HStack>
-        <Text style={styles.poster}>by {post.originalposter}</Text>
-        <View style={styles.separator}></View>
+    
+    return filteredPosts.map((post) => (
+      // const isFlagged = await checkFlaggedPost(post.id);
+      <Box key={post.id} bg="white" p="4" mb="4" borderRadius="md" shadow={1}>
+        <Pressable onPress={() => handlePostDetail(post.id)}>
+          <Heading size="md" mb="2">{post.title} </Heading>
+          <Text style={styles.category}>
+            Posted in {post.forumName} 
+            <Text style={styles.highlightedCategory}>{post.category}</Text>
+          </Text>
+          <Text style={styles.poster}>by {post.userName}</Text>
+        </Pressable>
+        <Divider mb="2" />
         <Text style={styles.postContent}>{post.content}</Text>
-        {post.images && post.images.map(image => (
-          <Image key={image.id} source={{ uri: image.url }} style={{ width: '100%', height: 200, resizeMode: 'cover', marginBottom: 10 }} />
-        ))}
-        {post.videos && post.videos.map(video => (
-          <Video key={video.id} source={{ uri: video.url }} style={{ width: '100%', height: 200, marginBottom: 10 }} />
-        ))}
-      </TouchableOpacity>
-
-  
-        <View style={styles.postFooter}>
-          <TouchableOpacity onPress={() => handleLike(post.id)} style={styles.actionButton}>
-            <Icon as={Ionicons} name="heart-outline" size={6} />
-            <Text style={styles.likes}>{post.likes}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleFlag(post.id)} style={styles.actionButton}>
-            <Icon as={Ionicons} name="flag-outline" size={6} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.tagContainer}>
-          {post.tags.map(tag => (
-            <View key={tag} style={styles.tag}>
-              <Text style={styles.tagText}>{tag}</Text>
-            </View>
-          ))}
-        </View>
+        <HStack justifyContent="space-between" alignItems="center">
+            <Pressable onPress={() => handleLike(post.id)}>
+              <HStack alignItems="center">
+                <Icon as={Ionicons} name={post.liked ? "heart" : "heart-outline"} size="sm" color="blue.500" />
+                <Text style={styles.likes}>{post.likes}</Text>
+              </HStack>
+            </Pressable>
+            <Pressable onPress={() => handleFlag(post.id)}>
+              <HStack alignItems="center">
+                <Icon as={Ionicons} name={true ? "flag" : "flag-outline"} size="sm" color={true ? "red.500" : "blue.500"} />
+                <Text style={styles.likes}>{post.flagNo}</Text>
+              </HStack>
+            </Pressable>
+          </HStack>
       </Box>
-      
     ));
   };
 
   return (
-    <ScrollView>
-      <Center w="100%">
+    <ScrollView contentContainerStyle={styles.container}>
+      <Center>
         <Heading size="lg" fontWeight="600" color="coolGray.800" _dark={{ color: "warmGray.50" }} style={styles.heading}>
-          Welcome to {forumName} community!
+          Welcome to {forumName} Community!
         </Heading>
       </Center>
       <HStack justifyContent="space-between" alignItems="center" style={styles.navbar}>
-        <Button size="sm" onPress={handleCreatePost} colorScheme="indigo"  startIcon={<Icon as={Ionicons} name="add-outline" size="sm"/>}>
+        <Button size="sm" onPress={handleCreatePost} startIcon={<Icon as={Ionicons} name="add-outline" size="sm" />} colorScheme="indigo">
           Create Post
         </Button>
-
-        
-        <Button size="sm" colorScheme="indigo"  startIcon={<Icon as={Ionicons} name="funnel-outline" size="sm" />}>
+        <Button size="sm" onPress={() => setVisible(true)} startIcon={<Icon as={Ionicons} name="funnel-outline" size="sm" />} colorScheme="indigo">
           Filter
         </Button>
       </HStack>
       {renderPosts()}
+      <Modal isVisible={showErrorModalLike}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalText}>You have already liked this post!</Text>
+          <Button onPress={() => setShowErrorModalLike(false)}>Close</Button>
+        </View>
+      </Modal>
+      <Modal isVisible={showErrorModalFlag}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalText}>You have already flagged this post!</Text>
+          <VStack space={2} alignItems="center">
+            <Button onPress={() => setShowErrorModalFlag(false)}>Close</Button>
+            <Button onPress={handleRemoveFlag}>Remove Flag</Button>
+          </VStack>
+        </View>
+      </Modal>
+      <Modal isVisible={showFlagReasonModal}>
+        <View style={styles.flagModalContent}>
+          <Pressable onPress={() => setShowFlagReasonModal(false)} style={styles.closeIcon}>
+            <Icon as={Ionicons} name="close" size="md" color="black" />
+          </Pressable>
+          <Text style={styles.modalText}>Enter reason for flagging the post:</Text>
+          <TextInput
+            style={styles.flagReasonInput}
+            onChangeText={(text) => setFlagReason(text)}
+            value={flagReason}
+            placeholder="Enter reason..."
+            multiline={true}
+          />
+          <Button onPress={submitFlag}>Submit</Button>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    paddingVertical: 20,
+    paddingHorizontal: 10,
+  },
   heading: {
     marginTop: 20,
-    color: 'white',
-    marginBottom: 10,
+    marginBottom: 15,
     textAlign: 'center',
+    color:'white',
   },
   navbar: {
-    paddingHorizontal: 20,
     marginBottom: 10,
   },
   category: {
@@ -176,54 +250,54 @@ const styles = StyleSheet.create({
   },
   highlightedCategory: {
     fontWeight: 'bold',
-    color: 'red', // Change color to your preferred highlight color
+    color: 'red',
   },
   poster: {
     marginBottom: 5,
     color: 'gray',
   },
-  separator: {
-    borderBottomColor: 'lightgray',
-    borderBottomWidth: 1,
-    marginBottom: 10,
-  },
   postContent: {
     color: 'gray',
     marginBottom: 10,
-  },
-  postContent: {
-    color: 'gray',
-    marginBottom: 10,
-  },
-  postFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  tagContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 10,
-  },
-  tag: {
-    backgroundColor: 'grey',
-    borderRadius: 20,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    marginRight: 5,
-    marginBottom: 5,
-  },
-  tagText: {
-    color: 'white',
   },
   likes: {
-    color: '#333',
-  }
+    marginLeft: 5,
+    color:'grey'
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 4,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  flagModalContent: {
+    backgroundColor: 'white',
+    padding: 22,
+    borderRadius: 4,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  modalText: {
+    marginBottom: 12,
+    textAlign: 'center',
+    color: 'black',
+  },
+  flagReasonInput: {
+    height: 100,
+    width: '100%',
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 20,
+    paddingHorizontal: 10,
+    color:'black',
+  },
+  closeIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 1,
+  },
 });
 
 export default CommunityPage;

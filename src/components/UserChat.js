@@ -1,77 +1,60 @@
-import React, { useContext, useEffect, useState } from "react";
-import { View, Text, Pressable, Image } from "react-native";
-import { Avatar, Button, Divider } from "react-native-paper";
+import React, { useState } from "react";
+import { View, Text, Pressable, StyleSheet } from "react-native";
+import { Avatar, Divider } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
-// import { UserType } from "../UserContext";
-import dummyMessages from "./dummyMessages.json";
-import dummyUsers from "./dummyUsers.json";
 
-const UserChat = ({ userId, item }) => {
-//   const { setUserId } = useContext(UserType);
-  const [messages, setMessages] = useState([]);
+const UserChat = ({ id2, username }) => {
   const navigation = useNavigation();
+  const localImage = require("../assets/images/avatar1.png");
 
-  // Simulate fetching messages
-  useEffect(() => {
-    // Delayed fetching to simulate asynchronous behavior
-    setTimeout(() => {
-      setMessages(dummyMessages);
-    }, 1000);
-  }, []);
+  const [recepientId, setRecipientId] = useState([id2])
+  const [recepientName, setRecipientName] = useState([username])
 
-  const getLastMessage = () => {
-    const userMessages = messages.filter(
-      (message) => message.senderId === userId && message.recipientId === item._id
-    );
-
-    const n = userMessages.length;
-
-    return n > 0 ? userMessages[n - 1] : null;
-  };
-
-  const lastMessage = getLastMessage();
-
-  const formatTime = (time) => {
-    const options = { hour: "numeric", minute: "numeric" };
-    return new Date(time).toLocaleString("en-US", options);
-  };
-
-  const user = dummyUsers.find((user) => user.id === item._id);
-
-  if (!user) return null;
+  // Hardcoded last message and timestamp
+  const lastMessage = "Hi there! How are you?";
+  const lastMessageTime = "10:30 AM";
 
   return (
     <>
       <Pressable
         onPress={() =>
-          navigation.navigate("ChatWindow", {
-            recipientId: item._id,
-          })
+          navigation.navigate("ChatWindow", {recepientId, recepientName})
         }
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          padding: 10,
-        }}
+        style={[styles.container, styles.lightBlueBackground]}
       >
-        <Avatar.Image size={50} source={{ uri: user.image }} />
+        <Avatar.Image size={50} source={localImage} />
         <View style={{ marginLeft: 12, flex: 1 }}>
-          <Text style={{ fontSize: 15, fontWeight: "500" }}>{user.name}</Text>
-          {lastMessage && (
-            <Text style={{ marginTop: 3, color: "white", fontWeight: "500" }}>
-              {lastMessage?.message}
-            </Text>
-          )}
+          <Text style={styles.username}>{username}</Text>
+          <Text style={styles.lastMessage}>{lastMessage}</Text>
         </View>
-        <View>
-          <Text style={{ fontSize: 11, color: "#585858" }}>
-            {lastMessage && formatTime(lastMessage?.timeStamp)}
-          </Text>
-        </View>
+        <Text style={styles.lastMessageTime}>{lastMessageTime}</Text>
       </Pressable>
       <Divider />
     </>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+  },
+  lightBlueBackground: {
+    backgroundColor: "#E0F2F1", // Light blue background color
+  },
+  username: {
+    fontSize: 15,
+    fontWeight: "500",
+    color:'black'
+  },
+  lastMessage: {
+    color: "#424242", // Dark gray text color for last message
+  },
+  lastMessageTime: {
+    marginLeft: 10,
+    color: "#757575", // Medium gray text color for timestamp
+  },
+});
 
 export default UserChat;

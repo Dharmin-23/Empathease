@@ -5,6 +5,7 @@ import { Button, Avatar, Text } from 'react-native-paper';
 import LinearGradient from 'react-native-linear-gradient';
 import UserProfile from '../UserProfile';
 import { useState } from 'react';
+import Carousel from '../../components/Carousel';
 
 const Homepage = () => {
   const navigation = useNavigation();
@@ -24,6 +25,12 @@ const Homepage = () => {
       <View style={styles.quoteContainer}>
         <Text style={styles.quote}>"Believe you can and you're halfway there."</Text>
       </View>
+
+      <View style={styles.carouselContainer}>
+      <Carousel/>
+      </View>
+
+      
 
       {/* Content */}
      
@@ -65,6 +72,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: 'black',
   },
+  carouselContainer:{
+    marginTop: 230,
+  
+  }
 });
 
 export default Homepage;

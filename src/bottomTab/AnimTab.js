@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React, { useEffect, useRef, useState, useContext } from 'react'
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, useColorScheme } from 'react-native'
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, useColorScheme, ActivityIndicator } from 'react-native'
 import Icon, { Icons } from '../components/Icons';
 import Colors from '../constants/Colors';
 import ColorScreen from '../screens/ColorScreen';
@@ -21,12 +21,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserType } from '../UserContext';
 import  jwt_decode  from 'jwt-decode';
 import axios from 'axios';
-import User from '../components/User';
+
 import { baseUrl } from '../constants/Constants';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import Bank from '../screens/Question/Bank';
+
 
 const TabArr = [
-  { route: 'Homepage', label: 'Homepage', type: Icons.AntDesign, icon: 'home', component: Homepage },
-  { route: 'Question', label: 'Questionare', type: Icons.AntDesign, icon: 'question', component: Question },
+  { route: 'Homepage', label: 'Home', type: Icons.AntDesign, icon: 'home', component: Homepage },
+  { route: 'Bank', label: 'Test', type: Icons.AntDesign, icon: 'question', component: Bank },
   { route: 'Community', label: 'Community', type: Icons.AntDesign, icon: 'team', component: ForumList },
   { route: 'Expert', label: 'Expert', type: Icons.Entypo, icon: 'graduation-cap', component: Expert },
   { route: 'Resources', label: 'Resources', type: Icons.AntDesign, icon: 'videocamera', component: Resources },
@@ -95,54 +98,129 @@ const TabButton = (props) => {
 
 const AnimTab = () => {
   // console.log(UserType)
-  const { user, setUser } = useContext(UserType);
-  console.log(user)
+  // const { user, setUser } = useContext(UserType);
+  const [isLoading, setIsLoading] = useState(false);
+  const [friendRequests, setFriendRequests] = useState([]);
+  const [acceptedFriends, setAcceptedFriends]= useState([]);
   
   const [users, setUsers] = useState([]);
   const [showProfileModal, setShowProfileModal] = useState(false);
   //const { email } = route.params;
   const navigation = useNavigation();
 
+  const handleTabPress = (item, navigation) => {
+    setIsLoading(true);
+    setTimeout(() => {
+      navigation.navigate(item.route);
+      setIsLoading(false);
+    }, 500); // Set timeout for 1.5 seconds
+  };
+
+  const fetchUsers = async () => {
+    console.log('Fetch Users from AnimTab')
+    
+    axios
+      .get(baseUrl + "/auth/")
+      .then((response) => {
+        // console.log(JSON.stringify(response,null, 2))
+        // console.log('@'+response.data.payload)
+        setUsers(response.data.payload);
+      })
+      .catch((error) => {
+        console.log("error retrieving users", error);
+      });
+  };
+
+
+  const fetchFriendRequestsUserInfo = async (ids) => {
+    try {
+      // console.log("inside fetchfriendrequsetinfo")
+      const token = await AsyncStorage.getItem("authToken");
+      const requests = ids.map(async (id) => {
+        const data= {"id":id};
+        const res = await axios.post(baseUrl + "/auth/specific",data, {
+          headers: { Authorization: "Bearer " + token }
+        });
+        const d = res.data.payload; 
+        return { id2: id, username: d }; // Assuming the user info is stored in 'payload'
+      });
+      const userData = await Promise.all(requests);
+      return userData;
+    } catch (error) {
+      console.error("Error fetching user info:", error);
+      return [];
+    }
+  };
+
+  const fetchFriendRequests = async () => {
+    try {
+        // Simulated fetch using the dummyFriends.json file
+     
+        const token = await AsyncStorage.getItem("authToken");
+        const res = await axios.get(baseUrl + "/api/helper/toAccept", {
+          headers: { Authorization: "Bearer " + token }
+        });
+        
+        axios.get(baseUrl+"api/helper/")
+        
+        const stringfyiedjson =JSON.parse(JSON.stringify(res))
+    
+        const friendRequestIds = stringfyiedjson.data.payload;
+        
+        const userData = await fetchFriendRequestsUserInfo(friendRequestIds);
+        
+        if (Array.isArray(userData)) {
+          
+          setFriendRequests(userData);
+        }
+        
+      } catch (err) {
+        console.log("error message", err);
+      }
+
+  };
+
+  const fetchAcceptedFriends = async () => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      // const userId = await AsyncStorage.getItem("userId");
+      const res = await axios.get(baseUrl + "/api/helper/accepted", {
+          headers: { Authorization: "Bearer " + token }
+        });
+      const stringfyiedjson =JSON.parse(JSON.stringify(res, null, 2))
+      const accpetedIds = stringfyiedjson.data.payload;
+        
+      const friendsData = await fetchFriendRequestsUserInfo(accpetedIds);
+      // console.log("Accepted Friends Data", friendsData)
+      if (Array.isArray(friendsData)) {
+          
+        setAcceptedFriends(friendsData);
+      }
+      console.log("Accepted Friends", acceptedFriends)
+      // Simulated fetching of accepted friends from JSON file
+      // const acceptedFriendsData = require("./dummyAcceptedFriends.json");
+    } catch (error) {
+      console.log("Error fetching accepted friends:", error);
+    }
+  };
+
+
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      console.log('Fetch Users')
-
-      // const token = await AsyncStorage.getItem("authToken");
-      // const [headerEncoded, payloadEncoded, signature] = token.split(".");
-      // const payload = JSON.parse(atob(payloadEncoded));
-
-      // console.log('!!!' + token);
-      
-      // const decodedToken = jwt_decode(token);
-      // console.log("%%%%%%%%%%%%%5")
-      // console.log(decodedToken)
-      // const userId = decodedToken.userId;
-      // console.log(userId)
-      // setUserId(userId);
-      
-      axios
-        .get(baseUrl + "/auth/")
-        .then((response) => {
-          // console.log(JSON.stringify(response,null, 2))
-          // console.log('@'+response.data.payload)
-          setUsers(response.data.payload);
-        })
-        .catch((error) => {
-          console.log("error retrieving users", error);
-        });
-    };
-
     fetchUsers();
+    // console.log("Calling Fetch friend requests in AnimTab")
+    fetchFriendRequests();
+    fetchAcceptedFriends();
   }, []);
 
 
   const handleChatIconPress = () => {
-    navigation.navigate('ChatListScreen');
+    navigation.navigate('ChatListScreen', {acceptedFriends});
   };
 
   const handleAllUsers = () => {
-    console.log(users)
+    console.log("Passing users to AllUsersScreen")
+    // console.log(users);
     navigation.navigate('AllUsersScreen', { users: users });
   }
   
@@ -161,30 +239,44 @@ const AnimTab = () => {
         <IconButton
           icon="chat"
           mode="contained-tonal"
-          iconColor={MD3Colors.primary50}
+          rippleColor={MD3Colors.secondary50}
+          iconColor={MD3Colors.secondary80}
           size={30}
           onPress={handleChatIconPress}
-          style={{marginRight: 20}}
           
-        />
-
-        <IconButton
-          icon="account-group"
-          mode="contained"
-          iconColor="white"
-          size={30}
-          onPress={handleAllUsers}
-          style={{marginRight: 20}}
           
         />
 
         <IconButton
           icon="account-multiple-plus"
           mode="contained"
-          iconColor={MD3Colors.primary50}
+          iconColor={MD3Colors.secondary80}
           size={30}
-          onPress={() => navigation.navigate("FriendsScreen")}
+          onPress={() => navigation.navigate("FriendsScreen", {friendRequests})}
+          style={{marginRight: 30}}
         />
+
+        <View>
+        
+          <TouchableOpacity onPress={handleAllUsers}>
+            <IconButton
+              icon="account-group"
+              mode="contained"
+              iconColor={MD3Colors.secondary80}
+              size={30}
+              onPress={handleAllUsers}
+
+              
+              
+            />
+              <Text style={styles.alluser} >Discover</Text>
+          </TouchableOpacity>
+      
+        </View>
+        
+        
+
+        
 
         
       </LinearGradient>
@@ -206,17 +298,27 @@ const AnimTab = () => {
               options={{
                 tabBarShowLabel: false,
                 tabBarButton: (props) => (
+                  // <TabButton
+                  //   {...props}
+                  //   item={item}
+                  //   onPress={() => navigation.navigate(item.route)}
+                  // />
                   <TabButton
-                    {...props}
-                    item={item}
-                    onPress={() => navigation.navigate(item.route)}
-                  />
+                  {...props}
+                  item={item}
+                  onPress={() => handleTabPress(item, navigation)}
+                />
                 )
               }}
             />
           )
         })}
       </Tab.Navigator>
+      {isLoading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="white" />
+        </View>
+      )}
     </SafeAreaView>
   )
 }
@@ -273,6 +375,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: Colors.primary,
     fontWeight: '500'
+  },
+  alluser: {
+    marginRight:10,
   }
 })
 

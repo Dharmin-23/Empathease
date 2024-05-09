@@ -1,37 +1,40 @@
-import React, { useContext } from "react";
-import { StyleSheet, Text, View, Pressable, Image } from "react-native";
-// import { UserType } from "../UserContext";
+import React, { useState } from "react";
+import { StyleSheet, Text, View, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Avatar } from "native-base";
+import { baseUrl } from "../constants/Constants";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const FriendRequest = ({ item, friendRequests, setFriendRequests }) => {
-  // const { userId } = useContext(UserType);
-  const userId =1;
+const FriendRequest = ({ userId, username }) => {
   const navigation = useNavigation();
-  console.log(item)
+  const [accepted, setAccepted] = useState(false);
+  
 
-  const acceptRequest = () => {
-    // Simulated acceptance of friend request
+  const acceptRequest = async () => {
     try {
-      // Remove the friend request from the list
-      setFriendRequests(
-        friendRequests.filter((request) => request._id !== item._id)
-      );
-      // Navigate to the chats screen
-      navigation.navigate("Chats");
+      const requestBody = { id2: userId }
+      const token = await AsyncStorage.getItem("authToken");
+      await axios.post(baseUrl + "/api/helper/accept", requestBody, {
+        headers: { Authorization: "Bearer " + token }
+      });
+      console.log("Accepted Succesfully!!!");
+      setAccepted(true); // Update the state to indicate acceptance
+      // You can navigate to the chats screen here or perform any other action
+      navigation.navigate("AnimTab");
     } catch (error) {
-      console.log("Error accepting friend request:", error);
+      console.error('Error accepting friend request:', error);
     }
   };
 
   return (
-    <Pressable style={styles.container} onPress={acceptRequest}>
-      <Avatar source={{ uri: item.image }} size="sm" />
-      <Text style={styles.name}>
-        <Text style={styles.bold}>{item}</Text> sent you a friend request!
-      </Text>
-      <Pressable style={styles.acceptButton} onPress={acceptRequest}>
-        <Text style={styles.acceptButtonText}>Accept</Text>
+    <Pressable style={styles.container} onPress={acceptRequest} disabled={accepted}>
+      <View style={styles.content}>
+        <Text style={styles.name}>
+          <Text style={styles.bold}>{username}</Text> sent you a friend request!
+        </Text>
+      </View>
+      <Pressable style={[styles.acceptButton, accepted && styles.acceptedButton]} onPress={acceptRequest} disabled={accepted}>
+        <Text style={styles.acceptButtonText}>{accepted ? 'Accepted' : 'Accept'}</Text>
       </Pressable>
     </Pressable>
   );
@@ -46,28 +49,28 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginVertical: 10,
     paddingHorizontal: 10,
-    paddingVertical: 10, // Increased padding
+    paddingVertical: 10,
     backgroundColor: "#F5F5F5",
-    borderRadius: 10, // Increased border radius
+    borderRadius: 10,
   },
-  avatar: {
-    borderRadius: 30, // Increased border radius
+  content: {
+    flex: 1,
   },
   name: {
-    flex: 1,
-    marginLeft: 10,
     fontSize: 16,
-    color: "#333", // Adjusted text color
-    marginRight: 10,
+    color: "#333",
   },
   bold: {
-    fontWeight: "bold", // Displaying friend's name in bold
+    fontWeight: "bold",
   },
   acceptButton: {
     backgroundColor: "#0066b2",
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 6,
+  },
+  acceptedButton: {
+    backgroundColor: "gray", // Change button color to gray when accepted
   },
   acceptButtonText: {
     color: "white",

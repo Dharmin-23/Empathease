@@ -27,6 +27,7 @@ import AllUsersScreen from './screens/Community/AllUsersScreen';
 import CommunityPage from './screens/Community/CommunityPage';
 import PostDetail from './screens/Community/PostDetail';
 import CreateComment from './screens/Community/CreateComment';
+import Question from './screens/Question';
 
 const App = () => {
     const isDarkMode = useColorScheme() === 'dark';
@@ -81,6 +82,7 @@ const RootStack = () => {
         <Stack.Screen name="CreateComment" component={CreateComment}/>
         <Stack.Screen name="AllUsersScreen" component={AllUsersScreen}/>
         <Stack.Screen name="MakeAppointment" component={MakeAppointment}/>
+        <Stack.Screen name="Question" component={Question}/>
         {/* <Stack.Screen name="UserProfile" component={UserProfile} /> */}
       </Stack.Navigator>
     );

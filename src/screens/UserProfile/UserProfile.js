@@ -15,14 +15,14 @@ const UserProfile = ({ isVisible, onClose, onLogout}) => {
   const [username, setUsername] = useState('');
   
   useEffect(()=>{
-    console.log("Userprofile useeffect")
+    // console.log("Userprofile useeffect")
     fetchUsername();
   }, [fetchUsername]);
 
   const fetchUsername = async () => {
     try {
       const username = await AsyncStorage.getItem("username");
-      console.log("Inside fetchusename"+username)
+      // console.log("Inside fetchusename"+username)
       setUsername(username); // Update the state with the fetched username
     } catch (error) {
       console.error('Error fetching username:', error);

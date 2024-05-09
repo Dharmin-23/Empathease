@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { Center, Box, VStack, FormControl, Heading, Input, Button, HStack, Link, Image } from 'native-base';
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
@@ -9,12 +9,15 @@ import axios from 'axios';
 import { baseUrl } from '../../constants/Constants';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScrollView } from 'react-native-gesture-handler';
+import { StyleSheet } from 'react-native';
 
 
 
 const SignIn = () => {
-  var res = 1;
+  // var res = 1;
   const navigation = useNavigation();
+  const [isUserNotExistPopupVisible, setUserNotExistPopupVisible] = useState(false);
+
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -35,7 +38,7 @@ const SignIn = () => {
   const [isOtpVisible, setIsOtpVisible] = useState(false);
 
   const [user, setUser] = useState({
-    email: '',
+    username: '',
     password: '',
   });
 
@@ -59,16 +62,21 @@ const SignIn = () => {
         console.log("login nresponse"+res.data)
         const token = res.data.payload.token;
         const username = res.data.payload.username;
-        console.log("Inside Signin "+ res.data.payload )
+        const userId = res.data.payload.id;
+        // console.log(res.data.payload )
       
         
         AsyncStorage.setItem("username", username)
         AsyncStorage.setItem("authToken", token);
+        // AsyncStorage.setItem("userId", userId)
         navigation.navigate('AnimTab');
         setIsOtpVisible(true); // Show OTP verification modal
       }
+      else{
+        setUserNotExistPopupVisible(true);
+      }
     } catch (error) {
-      setErrorMessage('Invalid email or password. Please try again.'); // Set error message
+      setErrorMessage('Invalid username or password. Please try again.'); // Set error message
     }
   };
 
@@ -82,6 +90,24 @@ const SignIn = () => {
     setIsOtpVisible(false);
     navigation.navigate('AnimTab');
   };
+
+  const UserNotExistPopup = (
+    <Modal
+      visible={isUserNotExistPopupVisible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => setUserNotExistPopupVisible(false)}
+    >
+      <View style={styles.popupContainer}>
+        <View style={styles.popup}>
+          <Text>User does not exist. Please try again.</Text>
+          <TouchableOpacity onPress={() => setUserNotExistPopupVisible(false)}>
+            <Text style={styles.popupCloseButton}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
 
   return (
     <ScrollView>
@@ -98,13 +124,14 @@ const SignIn = () => {
         <Heading mt="1" _dark={{ color: "warmGray.200" }} color="coolGray.600" fontWeight="medium" size="xs">
           Sign in to continue!
         </Heading>
+        {/* <UserNotExistPopup/> */}
 
         <VStack space={3} mt="5">
           <FormControl>
-            <FormControl.Label>Email ID</FormControl.Label>
+            <FormControl.Label>Enter your Username</FormControl.Label>
             <Input 
-            value={user.email} 
-            onChangeText={(value) => handleChange('email', value)} 
+            value={user.username} 
+            onChangeText={(value) => handleChange('username', value)} 
             color="white"/>
           </FormControl>
           <FormControl>
@@ -144,5 +171,25 @@ const SignIn = () => {
     </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  popupContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  popup: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  popupCloseButton: {
+    marginTop: 10,
+    color: 'blue',
+    textDecorationLine: 'underline',
+  },
+});
 
 export default SignIn;

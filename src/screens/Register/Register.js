@@ -38,7 +38,7 @@ const Register = () => {
     } else {
       try {
         res = await axios.post(baseUrl + "/auth/register", user);
-        console.log(res)
+        // console.log(res)
         // setOtpVisible(true);
     
 
