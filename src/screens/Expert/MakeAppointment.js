@@ -4,6 +4,9 @@ import DatePicker from 'react-native-date-picker';
 import { IconButton } from 'native-base';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import { baseUrl } from '../../constants/Constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MakeAppointment = () => {
   const [date, setDate] = useState(new Date());
@@ -15,10 +18,32 @@ const MakeAppointment = () => {
 
   const navigation = useNavigation();
 
-  const handleSendRequest = () => {
+  const handleSendRequest = async () => {
     // Logic to send appointment request
-    console.log('Send appointment request:', { date, time, problem });
-    setModalVisible(true);
+    try{
+      const username = await AsyncStorage.getItem("username");
+      const token = await AsyncStorage.getItem("authToken");
+  
+      const isoDate = date.toISOString(); // Date in ISO format
+      const isoTime = time.toISOString(); // Time in ISO format
+      const requestData = {
+        doctor: "Doctor",
+        patient: username,
+        appointmentAt: isoDate, // Combine date and time
+      };
+  
+      
+      const response = await axios.post(baseUrl + "/appointment/create", requestData, {
+        headers: { Authorization: "Bearer " + token }
+      });
+  
+      console.log('Sent appointment request:!! ', isoDate + 'T' + isoTime);
+      setModalVisible(true);
+    }
+    catch (error) {
+      console.error('Error creating appnt:', error);
+    }
+    
   };
 
   const closeModal = () => {
@@ -113,9 +138,11 @@ const MakeAppointment = () => {
           onRequestClose={closeModal}
         >
           <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+            <View style={styles.modalContent}>
               <Image source={require('../../assets/images/correct.png')} style={styles.modalImage} />
-              <Text style={styles.modalText}>Your appointment has been fixed!</Text>
+              <Text style={styles.modalText}>
+                Your appointment with <Text style={styles.doctorName}>Doctor</Text> has been fixed!
+              </Text>
               <TouchableOpacity onPress={closeModal}>
                 <MaterialIcons name="close" size={24} color="black" />
               </TouchableOpacity>
@@ -208,6 +235,10 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     marginBottom: 20,
+  },
+  doctorName: {
+    color: 'blue', // Set color to blue
+    fontWeight: 'bold', // Optionally set font weight
   },
 });
 
